@@ -402,12 +402,22 @@ h2.article-head {
 .active {
   border-bottom: 3px solid #42b983;
 }
+.fork-me {
+  position: absolute;
+  top: 0;
+  right: 0;
+  border: 0;
+  z-index: 299;
+}
 .menu {
   display: none;
   float: right;
   width: 24px;
   height: 24px;
   margin-top: 10px;
+  z-index: 999;
+  position: fixed;
+  right: 20px;
 }
 .menu .icon-bar {
   display: block;
