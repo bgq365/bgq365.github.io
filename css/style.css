@@ -331,6 +331,20 @@ h2.article-head {
   z-index: 200;
   transition: background 0.5s;
 }
+.index-page-header {
+  position: fixed;
+  background-color: rgba(255,255,255,0.98);
+  box-shadow: 0 0 3px rgba(14,14,14,0.26);
+}
+.index-page-header .home-link {
+  color: #42b983;
+}
+.index-page-header .menu .icon-bar {
+  background-color: #7f8c8d;
+}
+.index-page-header .item-link {
+  color: #34495e;
+}
 .fixed-header {
   position: fixed;
   background-color: rgba(255,255,255,0.98);

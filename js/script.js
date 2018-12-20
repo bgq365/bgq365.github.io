@@ -40,8 +40,8 @@
         if ($('.menu-mask').hasClass('open')) {
             header.addClass('fixed-header');
             $('.fork-me').hide();
-        }else {
-            if(scrollTop == 0){
+        } else {
+            if (scrollTop == 0) {
                 header.removeClass('fixed-header');
                 $('.fork-me').show();
             }
@@ -87,15 +87,13 @@
     document.addEventListener('scroll', function () {
         var scrollTop = document.documentElement.scrollTop || document.body.scrollTop
         var headerH = header.height()
-        if (banner) {
-            if (scrollTop > headerH) {
-                header.addClass('fixed-header');
-                $('.fork-me').hide();
-            } else if (scrollTop === 0) {
-                $('.menu-mask').removeClass('open');
-                header.removeClass('fixed-header');
-                $('.fork-me').show();
-            }
+        if (scrollTop > headerH) {
+            header.addClass('fixed-header');
+            $('.fork-me').hide();
+        } else if (scrollTop === 0) {
+            $('.menu-mask').removeClass('open');
+            header.removeClass('fixed-header');
+            $('.fork-me').show();
         }
         if (scrollTop > 100) {
             top.addClass('opacity')
