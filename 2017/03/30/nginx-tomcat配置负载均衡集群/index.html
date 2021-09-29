@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+  <head><meta name="generator" content="Hexo 3.9.0">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+  <meta name="description" content="bgq365&#39;s blog">
+  <meta name="keyword" content>
+  
+    <link rel="shortcut icon" href="../../../../css/images/logo.png">
+  
+  <title>
+    
+      nginx+tomcat配置负载均衡集群 | 三两土豆
+    
+  </title>
+  <link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <link href="//cdn.bootcss.com/nprogress/0.2.0/nprogress.min.css" rel="stylesheet">
+  <link href="//cdn.bootcss.com/highlight.js/9.12.0/styles/tomorrow.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../../../css/style.css">
+<link rel="stylesheet" href="../../../../css/plugins/gitment.css">
+  <script src="//cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+  <script src="//cdn.bootcss.com/geopattern/1.2.3/js/geopattern.min.js"></script>
+  <script src="//cdn.bootcss.com/nprogress/0.2.0/nprogress.min.js"></script>
+  <script src="../../../../js/qrious.js"></script>
+<script src="../../../../js/gitment.js"></script>
+  
+  
+    <!-- MathJax support START -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.1/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <!-- MathJax support END -->
+  
+
+
+</head>
+<div class="wechat-share">
+  <img src="/css/images/logo.png">
+</div>
+
+  <body>
+    <header class="header fixed-header">
+  <div class="header-container">
+    <a class="home-link" href="../../../../index.html">
+      <div class="logo"></div>
+      <span>三两土豆</span>
+    </a>
+    <ul class="right-list">
+      
+        <li class="list-item">
+          
+            <a href="../../../../index.html" class="item-link">Home</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="../../../../tags/" class="item-link">Tags</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="../../../../archives/" class="item-link">Archives</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="../../../../project/" class="item-link">Projects</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="../../../../about/" class="item-link">About</a>
+          
+        </li>
+      
+    </ul>
+    <div class="menu">
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </div>
+    <div class="menu-mask">
+      <ul class="menu-list">
+        
+          <li class="menu-item">
+            
+              <a href="../../../../index.html" class="menu-link">Home</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="../../../../tags/" class="menu-link">Tags</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="../../../../archives/" class="menu-link">Archives</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="../../../../project/" class="menu-link">Projects</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="../../../../about/" class="menu-link">About</a>
+            
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+    <a href="https://github.com/bgq365">
+      <img class="fork-me" src="/css/images/forkme_right_green_007200.png" alt="Fork me on GitHub">
+    </a>
+</header>
+
+    <div id="article-banner">
+  <h2>nginx+tomcat配置负载均衡集群</h2>
+  <p class="post-date">2017-03-30</p>
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+<main class="app-body flex-box">
+  <!-- Article START -->
+  <article class="post-article">
+    <section class="markdown-content"><h1 id="一、Hello-world"><a href="#一、Hello-world" class="headerlink" title="一、Hello world"></a>一、Hello world</h1><h2 id="1、前期环境准备"><a href="#1、前期环境准备" class="headerlink" title="1、前期环境准备"></a>1、前期环境准备</h2><ol>
+<li>准备两个解压版tomcat，如何同时启动两个tomcat，请看我的另一篇文章《一台机器同时启动多个tomcat》。</li>
+<li>nginx官网下载解压版nginx。</li>
+<li>创建一个简单的web项目。为了直观的区分访问的哪个tomcat，在页面写上标记8081、8082。<br><img src="1.png" alt></li>
+<li>分别部署到对应的tomcat下。如图：​​​​<br><img src="2.png" alt><img src="3.png" alt><h2 id="2、配置nginx"><a href="#2、配置nginx" class="headerlink" title="2、配置nginx"></a>2、配置nginx</h2>进入nginx-1.10.1\conf路径，修改配置文件<strong>nginx.conf</strong>。</li>
+<li><p>配置服务器组，在http{}节点之间添加upstream配置。（注意不要写localhost，不然访问速度会很慢）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">upstream nginxDemo &#123;</span><br><span class="line">    server 127.0.0.1:8081;   #服务器地址1</span><br><span class="line">    server 127.0.0.1:8082;   #服务器地址2</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>修改nginx监听的端口号80，改为8080。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line">    listen       8080;</span><br><span class="line">    ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在location{}中，利用proxy_pass配置反向代理地址；此处“http://”不能少，后面的地址要和第一步upstream定义的名称保持一致。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">location / &#123;</span><br><span class="line">    root   html;</span><br><span class="line">    index  index.html index.htm;</span><br><span class="line">    proxy_pass http://nginxDemo; #配置方向代理地址</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>如下图：<br><img src="4.png" alt></p>
+<h2 id="3、启动nginx和tomcat，访问"><a href="#3、启动nginx和tomcat，访问" class="headerlink" title="3、启动nginx和tomcat，访问"></a>3、启动nginx和tomcat，访问</h2><p>我是Windows系统，所以直接在nginx-1.10.1目录下双击nginx.exe即可。<br>最后在浏览器输入地址：<a href="http://localhost:8080/nginxDemo/index.jsp，每次访问就会轮流访问tomcat了（如果F5刷新不管用，建议试试鼠标指针放到地址栏，点击Enter键）。" target="_blank" rel="noopener">http://localhost:8080/nginxDemo/index.jsp，每次访问就会轮流访问tomcat了（如果F5刷新不管用，建议试试鼠标指针放到地址栏，点击Enter键）。</a><br><img src="5.png" alt><br><img src="6.png" alt><br>到这里，一个非常简单的负载均衡就配置完成了，是不是很简单呢，O(∩_∩)O哈哈~</p>
+<h1 id="二、nginx负载均衡策略"><a href="#二、nginx负载均衡策略" class="headerlink" title="二、nginx负载均衡策略"></a>二、nginx负载均衡策略</h1><h2 id="1、轮询（默认）"><a href="#1、轮询（默认）" class="headerlink" title="1、轮询（默认）"></a>1、轮询（默认）</h2><p>每个web请求按时间顺序逐一分配到不同的后端服务器，如果后端服务器down掉，能自动剔除。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">upstream nginxDemo &#123;</span><br><span class="line">    server 127.0.0.1:8081;</span><br><span class="line">    server 127.0.0.1:8082;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="2、最少链接"><a href="#2、最少链接" class="headerlink" title="2、最少链接"></a>2、最少链接</h2><p>web请求会被转发到连接数最少的服务器上。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">upstream nginxDemo &#123;</span><br><span class="line">    least_conn;</span><br><span class="line">    server 127.0.0.1:8081;</span><br><span class="line">    server 127.0.0.1:8082;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="3、weight-权重"><a href="#3、weight-权重" class="headerlink" title="3、weight 权重"></a>3、weight 权重</h2><p>指定轮询几率，weight和访问比率成正比，用于后端服务器性能不均的情况，weight默认是1。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#服务器A和服务器B的访问比例为：2-1;比如有3个请求，前两个会访问A，三个访问B，其它规则和轮询一样。</span><br><span class="line">upstream nginxDemo &#123;</span><br><span class="line">    server 127.0.0.1:8081 weight=2; #服务器A</span><br><span class="line">    server 127.0.0.1:8082; #服务器B</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="4、ip-hash"><a href="#4、ip-hash" class="headerlink" title="4、ip_hash"></a>4、ip_hash</h2><p>每个请求按访问ip的hash值分配，这样同一客户端连续的Web请求都会被分发到同一服务器进行处理，可以解决session的问题。当后台服务器宕机时，会自动跳转到其它服务器。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">upstream nginxDemo &#123;</span><br><span class="line">    ip_hash;</span><br><span class="line">    server 127.0.0.1:8081 weight=2; #服务器A</span><br><span class="line">    server 127.0.0.1:8082; #服务器B</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>基于weight的负载均衡和基于ip_hash的负载均衡可以组合在一起使用。</p>
+<h2 id="5、url-hash（第三方）"><a href="#5、url-hash（第三方）" class="headerlink" title="5、url_hash（第三方）"></a>5、url_hash（第三方）</h2><p>url_hash是nginx的第三方模块，nginx本身不支持，需要打补丁。</p>
+<p>nginx按访问url的hash结果来分配请求，使每个url定向到同一个后端服务器，后端服务器为缓存服务器、文件服务器、静态服务器时比较有效。缺点是当后端服务器宕机的时候，url_hash不会自动跳转的其他缓存服务器，而是返回给用户一个503错误。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">upstream nginxDemo &#123;</span><br><span class="line">    server 127.0.0.1:8081; #服务器A</span><br><span class="line">    server 127.0.0.1:8082; #服务器B</span><br><span class="line">    hash $request_url;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="6、fair（第三方）"><a href="#6、fair（第三方）" class="headerlink" title="6、fair（第三方）"></a>6、fair（第三方）</h2><p>按后端服务器的响应时间来分配请求，响应时间短的优先分配。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">upstream nginxDemo &#123;</span><br><span class="line">    server 127.0.0.1:8081; #服务器A</span><br><span class="line">    server 127.0.0.1:8082; #服务器B</span><br><span class="line">    fair;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h1 id="三、集群-分布式环境下session处理策略"><a href="#三、集群-分布式环境下session处理策略" class="headerlink" title="三、集群/分布式环境下session处理策略"></a>三、集群/分布式环境下session处理策略</h1><p>因为很多朋友提到session的管理问题，所以接下来决定写一下在集群/分布式环境下session处理策略。</p>
+<h2 id="1、为什么要处理session？"><a href="#1、为什么要处理session？" class="headerlink" title="1、为什么要处理session？"></a>1、为什么要处理session？</h2><p>这个问题想必大多数朋友都知道，在搭建完集群或者分布式环境之后，如果不做任何处理的话，网站将频繁的出现用户未登录的现象。比如：集群中有A、B两台服务器，用户第一次访问网站时，Nginx将用户请求分发到A服务器，这时A服务器给用户创建了一个Session，当用户第二次访问网站时，假设Nginx将用户请求分发到了B服务器上，而这时B服务器并不存在用户的Session，所以就会出现用户未登录的情况，这对用户来说是不可忍受的。</p>
+<p>所以我们在搭建集群/分布式环境之后，必须考虑的一个问题就是用户访问产生的session如何处理，即session的共享机制。</p>
+<p>我们将处理Session的方式大致分为三种：<strong>Session保持</strong>（也有人叫黏性Session）、<strong>Session复制</strong>、<strong>Session共享</strong>。</p>
+<h2 id="2、Session保持（或者叫黏性Session）"><a href="#2、Session保持（或者叫黏性Session）" class="headerlink" title="2、Session保持（或者叫黏性Session）"></a>2、Session保持（或者叫黏性Session）</h2><p><strong>Session保持（会话保持）就是将用户锁定到某一个服务器上</strong>。比如上面说的例子，用户第一次请求时，负载均衡器（Nginx）将用户的请求分发到了A服务器上，如果负载均衡器（Nginx）设置了Session保持的话，那么用户以后的每次请求都会分发到A服务器上，相当于把用户和A服务器粘到了一块，这就是Session保持的原理。Session保持方案在所有的负载均衡器都有对应的实现。而且这是在负载均衡这一层就可以解决Session问题。</p>
+<p><strong>优点</strong>：非常简单，不需要对session做任何处理。</p>
+<p><strong>缺点</strong>：1、负责不绝对均衡了：由于使用了Session保持，很显然就无法保证负载绝对的均衡。<br>2、缺乏容错性：如果后端某台服务器宕机，那么这台服务器的Session丢失，被分配到这台服务请求的用户还是需要重新登录，所以没有彻底的解决问题。</p>
+<p><strong>适用场景</strong>：发生故障对客户产生的影响较小；服务器发生故障是低概率事件。</p>
+<p><strong>实现方式</strong>：以Nginx为例，在upstream模块配置ip_hash属性即可实现粘性Session，具体可以参考2.4章节。</p>
+<h2 id="3、Session复制"><a href="#3、Session复制" class="headerlink" title="3、Session复制"></a>3、Session复制</h2><p>针对Session保持的容错性缺点，我们可以在所有服务器上都保存一份用户的Session信息。这种将每个服务器中的Session信息复制到其它服务器上的处理办法就称为会话复制。当任何一台服务器上的session发生改变时，该节点会把session的所有内容序列化，然后广播给所有其它节点，不管其他服务器需不需要session，以此来保证Session同步。</p>
+<p>优点：可容错，各个服务器间的Session能够实时响应。</p>
+<p>缺点：将session广播同步给成员，会对网络负荷造成一定压力；如果session量大的话可能会造成网络堵塞，拖慢服务器性能，特别是session保存的对象较大，并且对象变化较快时；从而也使应用水平扩展受到限制；<br>session内容的序列化，也消耗了系统的性能；实现方式局限，必须在同一种组件之间实现（比如用的tomcat，则必须全部用tomcat）。</p>
+<p>实现方式：tomcat本身已支持该功能，可以参考<a href="http://tomcat.apache.org/tomcat-7.0-doc/cluster-howto.html" target="_blank" rel="noopener">官方文档</a>。<br>官网介绍已经很详细，这里不再介绍。而且这种处理方式，在大的集群中也不推荐生产环境使用。</p>
+<p>tomcat的会话复制分为两种：  </p>
+<ul>
+<li><strong>全局复制(DeltaManager)</strong>：复制会话中的变更信息到集群中的所有其他节点。</li>
+<li><strong>非全局复制（BackupManager）</strong>：它会把Session复制给一个指定的备份节点。<h2 id="4、Session共享"><a href="#4、Session共享" class="headerlink" title="4、Session共享"></a>4、Session共享</h2>Session共享的实现方式有很多种，比如memcached、Redis、DB等；核心思想是修改tomcat的session存储机制，使之能够把session序列化，然后存放到memcached中。</li>
+</ul>
+<p>使用Session共享可以分为两种机制：  </p>
+<ul>
+<li>黏性Session处理方式：<br>Tomcat本地Session为主Session，Memcached 中的Session为备Session。用户访问时首先在tomcat中创建session，然后将session复制一份放到对应的memcahed上。memcache只起备份作用，读写都在tomcat上。当某一个tomcat挂掉后，集群将用户的访问定位到备tomcat上，然后根据cookie中存储的SessionId找session，找不到时，再去相应的memcached上取session，找到之后将其复制到备tomcat上。</li>
+<li>非黏性Session处理方式：<br>Tomcat本地Session为中转Session，Memcached为主备Session。创建的session都往memcached上写，读取都从memcached读取，tomcat本身不存储session。</li>
+</ul>
+<p>实现方式1：Tomcat+Nginx+MSM+memcached</p>
+<p>a. 相关jar包放到tomcat/lib目录下：</p>
+<ul>
+<li>Java memcached客户端：spymemcached.jar</li>
+<li>MSM：<ol>
+<li>核心包，memcached-session-manager-{version}.jar  </li>
+<li>Tomcat版本对应的jar包：memcached-session-manager-tc{tomcat-version}-{version}.jar</li>
+</ol>
+</li>
+<li>序列化工具包：可选kryo（据说效率比较快），javolution，xstream等，不设置时使用jdk默认序列化。<br>b. Tomcat文件tomcat\conf\context.xml添加：<br>黏性处理方式：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;Manager className=&quot;de.javakaffee.web.msm.MemcachedBackupSessionManager&quot;</span><br><span class="line">               memcachedNodes=&quot;n1:192.168.2.61:11211,n2:192.168.2.66:11211&quot;</span><br><span class="line">               requestUriIgnorePattern=&quot;.*\.(ico|png|gif|jpg|css|js)$&quot;</span><br><span class="line">               transcoderFactoryClass=&quot;de.javakaffee.web.msm.serializer.kryo.KryoTranscoderFactory&quot;</span><br><span class="line">               /&gt;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>非黏性处理方式：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&lt;Manager className=&quot;de.javakaffee.web.msm.MemcachedBackupSessionManager&quot;</span><br><span class="line">               memcachedNodes=&quot;n1:192.168.2.61:11211,n2:192.168.2.66:11211&quot;</span><br><span class="line">               sticky=&quot;false&quot;</span><br><span class="line">               lockingMode=&quot;auto&quot;</span><br><span class="line">               requestUriIgnorePattern=&quot;.*\.(ico|png|gif|jpg|css|js)$&quot;</span><br><span class="line">               sessionBackupAsync= &quot;false&quot;</span><br><span class="line">               sessionBackupTimeout= &quot;100&quot;</span><br><span class="line">               transcoderFactoryClass=&quot;de.javakaffee.web.msm.serializer.kryo.KryoTranscoderFactory&quot;</span><br><span class="line">               /&gt;</span><br></pre></td></tr></table></figure></p>
+<p>Manager标签属性说明</p>
+<p><a href>《tomcat + MSM：Manager标签属性说明》</a></p>
+</section>
+    <!-- Tags START -->
+    
+      <div class="tags">
+        <span>Tags:</span>
+        
+  <a href="../../../../tags#nginx" >
+    <span class="tag-code">nginx</span>
+  </a>
+
+  <a href="../../../../tags#tomcat" >
+    <span class="tag-code">tomcat</span>
+  </a>
+
+  <a href="../../../../tags#负载均衡" >
+    <span class="tag-code">负载均衡</span>
+  </a>
+
+  <a href="../../../../tags#集群" >
+    <span class="tag-code">集群</span>
+  </a>
+
+      </div>
+    
+    <!-- Tags END -->
+    <!-- NAV START -->
+    
+  <div class="nav-container">
+    <!-- reverse left and right to put prev and next in a more logic postition -->
+    
+      <a class="nav-left" href="../../../01/06/细说MySQL索引/">
+        <span class="nav-arrow">← </span>
+        
+          细说MySQL索引
+        
+      </a>
+    
+    
+      <a class="nav-right" href="../tomcat+MSM：Manager标签属性说明/">
+        
+          tomcat+MSM：Manager标签属性说明
+        
+        <span class="nav-arrow"> →</span>
+      </a>
+    
+  </div>
+
+    <!-- NAV END -->
+    <!-- 打赏 START -->
+    
+    <!-- 打赏 END -->
+    <!-- 二维码 START -->
+    
+      <div class="qrcode">
+        <canvas id="share-qrcode"></canvas>
+        <p class="notice">扫描二维码，分享此文章</p>
+      </div>
+    
+    <!-- 二维码 END -->
+    
+      <!-- Gitment START -->
+      <div id="comments"></div>
+      <!-- Gitment END -->
+    
+  </article>
+  <!-- Article END -->
+  <!-- Catalog START -->
+  
+    <aside class="catalog-container">
+  <div class="toc-main">
+    <strong class="toc-title">目录</strong>
+    
+      <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#一、Hello-world"><span class="toc-nav-text">一、Hello world</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#1、前期环境准备"><span class="toc-nav-text">1、前期环境准备</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#2、配置nginx"><span class="toc-nav-text">2、配置nginx</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#3、启动nginx和tomcat，访问"><span class="toc-nav-text">3、启动nginx和tomcat，访问</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#二、nginx负载均衡策略"><span class="toc-nav-text">二、nginx负载均衡策略</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#1、轮询（默认）"><span class="toc-nav-text">1、轮询（默认）</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#2、最少链接"><span class="toc-nav-text">2、最少链接</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#3、weight-权重"><span class="toc-nav-text">3、weight 权重</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#4、ip-hash"><span class="toc-nav-text">4、ip_hash</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#5、url-hash（第三方）"><span class="toc-nav-text">5、url_hash（第三方）</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#6、fair（第三方）"><span class="toc-nav-text">6、fair（第三方）</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#三、集群-分布式环境下session处理策略"><span class="toc-nav-text">三、集群/分布式环境下session处理策略</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#1、为什么要处理session？"><span class="toc-nav-text">1、为什么要处理session？</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#2、Session保持（或者叫黏性Session）"><span class="toc-nav-text">2、Session保持（或者叫黏性Session）</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#3、Session复制"><span class="toc-nav-text">3、Session复制</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#4、Session共享"><span class="toc-nav-text">4、Session共享</span></a></li></ol></li></ol>
+    
+  </div>
+</aside>
+  
+  <!-- Catalog END -->
+</main>
+
+<script>
+  (function () {
+    var url = 'http://bgq365.github.io/2017/03/30/nginx-tomcat配置负载均衡集群/';
+    var banner = ''
+    if (banner !== '' && banner !== 'undefined' && banner !== 'null') {
+      $('#article-banner').css({
+        'background-image': 'url(' + banner + ')'
+      })
+    } else {
+      $('#article-banner').geopattern(url)
+    }
+    $('.header').removeClass('fixed-header')
+
+     // error image
+    $(".markdown-content img").on('error', function() {
+      $(this).attr('src', 'http://file.muyutech.com/error-img.png')
+      $(this).css({
+        'cursor': 'default'
+      })
+    })
+
+    // zoom image
+    $(".markdown-content img").on('click', function() {
+      var src = $(this).attr('src')
+      if (src !== 'http://file.muyutech.com/error-img.png') {
+        var imageW = $(this).width()
+        var imageH = $(this).height()
+        
+        var zoom = ($(window).width() * 0.95 / imageW).toFixed(2)
+        zoom = zoom < 1 ? 1 : zoom
+        zoom = zoom > 2 ? 2 : zoom
+        var transY = (($(window).height() - imageH) / 2).toFixed(2)
+
+        $('body').append('<div class="image-view-wrap"><div class="image-view-inner"><img src="'+ src +'" /></div></div>')
+        $('.image-view-wrap').addClass('wrap-active')
+        $('.image-view-wrap img').css({
+          'width': `${imageW}`,
+          'transform': `translate3d(0, ${transY}px, 0) scale3d(${zoom}, ${zoom}, 1)`
+        })
+        $('html').css('overflow', 'hidden')
+
+        $('.image-view-wrap').on('click', function() {
+          $(this).remove()
+          $('html').attr('style', '')
+        })
+      }
+    })
+
+    // qrcode
+    var qr = new QRious({
+      element: document.getElementById('share-qrcode'),
+      value: document.location.href
+    });
+
+    // gitment
+    var gitmentConfig = "bgq365";
+    if (gitmentConfig !== 'undefined') {
+      var gitment = new Gitment({
+        id: "nginx+tomcat配置负载均衡集群",
+        owner: "bgq365",
+        repo: "bgq365.github.io",
+        oauth: {
+          client_id: "f3e90d28b061179a623d",
+          client_secret: "18a443624ad8d5a4ec225e054e1b5acedd0ed630"
+        },
+        theme: {
+          render(state, instance) {
+            const container = document.createElement('div')
+            container.lang = "en-US"
+            container.className = 'gitment-container gitment-root-container'
+            container.appendChild(instance.renderHeader(state, instance))
+            container.appendChild(instance.renderEditor(state, instance))
+            container.appendChild(instance.renderComments(state, instance))
+            container.appendChild(instance.renderFooter(state, instance))
+            return container;
+          }
+        }
+      })
+      gitment.render(document.getElementById('comments'))
+    }
+  })();
+</script>
+
+    <div class="scroll-top">
+  <span class="arrow-icon"></span>
+</div>
+    <footer class="app-footer">
+  <p class="copyright">
+    &copy; 2017 - 2021 | Proudly powered by <a href="https://hexo.io" target="_blank">Hexo</a>
+  </p>
+</footer>
+
+<script>
+  function async(u, c) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+</script>
+<script>
+  async("//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+    FastClick.attach(document.body);
+  })
+</script>
+
+<script>
+  var hasLine = 'true';
+  async("//cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js", function(){
+    $('figure pre').each(function(i, block) {
+      var figure = $(this).parents('figure');
+      if (hasLine === 'false') {
+        figure.find('.gutter').hide();
+      }
+      var lang = figure.attr('class').split(' ')[1] || 'code';
+      var codeHtml = $(this).html();
+      var codeTag = document.createElement('code');
+      codeTag.className = lang;
+      codeTag.innerHTML = codeHtml;
+      $(this).attr('class', '').empty().html(codeTag);
+      figure.attr('data-lang', lang.toUpperCase());
+      hljs.highlightBlock(block);
+    });
+  })
+</script>
+<!-- Baidu Tongji -->
+
+<script src="../../../../js/script.js"></script>
+  </body>
+</html>

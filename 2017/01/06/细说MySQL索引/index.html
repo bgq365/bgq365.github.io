@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html>
+  <head><meta name="generator" content="Hexo 3.9.0">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+  <meta name="description" content="bgq365&#39;s blog">
+  <meta name="keyword" content>
+  
+    <link rel="shortcut icon" href="../../../../css/images/logo.png">
+  
+  <title>
+    
+      细说MySQL索引 | 三两土豆
+    
+  </title>
+  <link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <link href="//cdn.bootcss.com/nprogress/0.2.0/nprogress.min.css" rel="stylesheet">
+  <link href="//cdn.bootcss.com/highlight.js/9.12.0/styles/tomorrow.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../../../css/style.css">
+<link rel="stylesheet" href="../../../../css/plugins/gitment.css">
+  <script src="//cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+  <script src="//cdn.bootcss.com/geopattern/1.2.3/js/geopattern.min.js"></script>
+  <script src="//cdn.bootcss.com/nprogress/0.2.0/nprogress.min.js"></script>
+  <script src="../../../../js/qrious.js"></script>
+<script src="../../../../js/gitment.js"></script>
+  
+  
+    <!-- MathJax support START -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.1/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <!-- MathJax support END -->
+  
+
+
+</head>
+<div class="wechat-share">
+  <img src="/css/images/logo.png">
+</div>
+
+  <body>
+    <header class="header fixed-header">
+  <div class="header-container">
+    <a class="home-link" href="../../../../index.html">
+      <div class="logo"></div>
+      <span>三两土豆</span>
+    </a>
+    <ul class="right-list">
+      
+        <li class="list-item">
+          
+            <a href="../../../../index.html" class="item-link">Home</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="../../../../tags/" class="item-link">Tags</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="../../../../archives/" class="item-link">Archives</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="../../../../project/" class="item-link">Projects</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="../../../../about/" class="item-link">About</a>
+          
+        </li>
+      
+    </ul>
+    <div class="menu">
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </div>
+    <div class="menu-mask">
+      <ul class="menu-list">
+        
+          <li class="menu-item">
+            
+              <a href="../../../../index.html" class="menu-link">Home</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="../../../../tags/" class="menu-link">Tags</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="../../../../archives/" class="menu-link">Archives</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="../../../../project/" class="menu-link">Projects</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="../../../../about/" class="menu-link">About</a>
+            
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+    <a href="https://github.com/bgq365">
+      <img class="fork-me" src="/css/images/forkme_right_green_007200.png" alt="Fork me on GitHub">
+    </a>
+</header>
+
+    <div id="article-banner">
+  <h2>细说MySQL索引</h2>
+  <p class="post-date">2017-01-06</p>
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+<main class="app-body flex-box">
+  <!-- Article START -->
+  <article class="post-article">
+    <section class="markdown-content"><blockquote>
+<p>本文从如何建立mysql索引以及介绍mysql的索引类型，再讲mysql索引的利与弊，以及建立索引时需要注意的地方</p>
+</blockquote>
+<h2 id="索引的概念"><a href="#索引的概念" class="headerlink" title="索引的概念"></a>索引的概念</h2><p>索引是一种特殊的文件(InnoDB数据表上的索引是表空间的一个组成部分)，它们包含着对数据表里所有记录的引用指针。更通俗的说，数据库索引好比是一本书前面的目录，能加快数据库的查询速度。</p>
+<p>索引分为聚集索引和非聚集索引两种，聚簇索引是按照数据存放的物理位置为顺序的，而非聚簇索引就不一样了；聚簇索引能提高多行检索的速度，而非聚簇索引对于单行的检索很快。</p>
+<p><code>------如果已了解 聚集索引和非聚集索引，可以跳过此段------</code></p>
+<h3 id="什么是聚集索引？？"><a href="#什么是聚集索引？？" class="headerlink" title="什么是聚集索引？？"></a>什么是聚集索引？？</h3><p>汉语字典的正文本身就是一个聚集索引。比如，我们要查“安”字，就会很自然地翻开字典的前几页，因为“安”的拼音是“an”，而按照拼音排序汉字的字典是以英文字母“a”开头并以“z”结尾的，那么“安”字就自然地排在字典的前部。如果您翻完了所有以“a”开头的部分仍然找不到这个字，那么就说明您的字典中没有这个字；同样的，如果查“张”字，那您也会将您的字典翻到最后部分，因为“张”的拼音是“zhang”。也就是说，字典的正文部分本身就是一个目录，您不需要再去查其他目录来找到您需要找的内容。正文内容本身就是一种按照一定规则排列的目录称为“聚集索引”。每个表只能有一个聚集索引，因为目录只能按照一种方法进行排序。</p>
+<h3 id="什么是非聚集索引？？"><a href="#什么是非聚集索引？？" class="headerlink" title="什么是非聚集索引？？"></a>什么是非聚集索引？？</h3><p>如果您认识某个字，您可以快速地从自动中查到这个字。但您也可能会遇到您不认识的字，不知道它的发音，这时候，您就不能按照刚才的方法找到您要查的字，而需要去根据“偏旁部首”查到您要找的字，然后根据这个字后的页码直接翻到某页来找到您要找的字。但您结合“部首目录”和“检字表”而查到的字的排序并不是真正的正文的排序方法，比如您查“张”字，我们可以看到在查部首之后的检字表中“张”的页码是672页，检字表中“张”的上面是“驰”字，但页码却是63页，“张”的下面是“弩”字，页面是390页。很显然，这些字并不是真正的分别位于“张”字的上下方，现在您看到的连续的“驰、张、弩”三字实际上就是他们在非聚集索引中的排序，是字典正文中的字在非聚集索引中的映射。我们可以通过这种方式来找到您所需要的字，但它需要两个过程，先找到目录中的结果，然后再翻到您所需要的页码。我们把这种目录纯粹是目录，正文纯粹是正文的排序方式称为“非聚集索引”。</p>
+<h3 id="存储特点："><a href="#存储特点：" class="headerlink" title="存储特点："></a>存储特点：</h3><p>1、<strong>聚集索引</strong>。表数据按照索引的顺序来存储的，也就是说索引项的顺序与表中记录的物理顺序一致。对于聚集索引，叶子结点即存储了真实的数据行，不再有另外单独的数据页。 在一张表上最多只能创建一个聚集索引，因为真实数据的物理顺序只能有一种。</p>
+<p>2、<strong>非聚集索引</strong>。表数据存储顺序与索引顺序无关。对于非聚集索引，叶结点包含索引字段值及指向数据页数据行的逻辑指针，其行数量与数据表行数据量一致。</p>
+<p><strong>总结一下</strong>：聚集索引是一种稀疏索引，数据页上一级的索引页存储的是页指针，而不是行指针。而对于非聚集索引，则是密集索引，在数据页的上一级索引页它为每一个数据行存储一条索引记录。</p>
+<h3 id="更新表数据："><a href="#更新表数据：" class="headerlink" title="更新表数据："></a>更新表数据：</h3><h4 id="向表中插入新数据行"><a href="#向表中插入新数据行" class="headerlink" title="向表中插入新数据行"></a>向表中插入新数据行</h4><p>如果一张表没有聚集索引，那么它被称为“堆集”（Heap）。这样的表中的数据行没有特定的顺序，所有的新行将被添加到表的末尾位置。</p>
+<p>而建立了聚簇索引的数据表则不同：最简单的情况下，插入操作根据索引找到对应的数据页，然后通过挪动已有的记录为新数据腾出空间，最后插入数据。如果数据页已满，则需要拆分数据页，调整索引指针（且如果表还有非聚集索引，还需要更新这些索引指向新的数据页）。而类似于自增列为聚集索引的，数据库系统可能并不拆分数据页，而只是简单的新添数据页。</p>
+<h4 id="从表中删除数据行"><a href="#从表中删除数据行" class="headerlink" title="从表中删除数据行"></a>从表中删除数据行</h4><p>对删除数据行来说：删除行将导致其下方的数据行向上移动以填充删除记录造成的空白。如果删除的行是该数据页中的最后一行，那么该数据页将被回收，相应的索引页中的记录将被删除。对于数据的删除操作，可能导致索引页中仅有一条记录，这时，该记录可能会被移至邻近的索引页中，原索引页将被回收，即所谓的“索引合并”。</p>
+<hr>
+<h2 id="下面结合例子说明"><a href="#下面结合例子说明" class="headerlink" title="下面结合例子说明"></a>下面结合例子说明</h2><blockquote>
+<p>首先:先假设有一张表，表的数据有10W条数据，其中有一条数据是nickname=’css’，如果要拿这条数据的话需要写的sql是 SELECT * FROM award WHERE nickname = ‘css’。</p>
+</blockquote>
+<p>一般情况下，在没有建立索引的时候，mysql需要扫描全表及扫描10W条数据找这条数据，如果我在nickname上建立索引，那么mysql只需要扫描一行数据及为我们找到这条nickname=’css’的数据，是不是感觉性能提升了好多….</p>
+<p>本文使用的案例的表<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> <span class="string">`award`</span> (</span><br><span class="line">   <span class="string">`id`</span> <span class="built_in">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> AUTO_INCREMENT <span class="keyword">COMMENT</span> <span class="string">'用户id'</span>,</span><br><span class="line">   <span class="string">`aty_id`</span> <span class="built_in">varchar</span>(<span class="number">100</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">DEFAULT</span> <span class="string">''</span> <span class="keyword">COMMENT</span> <span class="string">'活动场景id'</span>,</span><br><span class="line">   <span class="string">`nickname`</span> <span class="built_in">varchar</span>(<span class="number">12</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">DEFAULT</span> <span class="string">''</span> <span class="keyword">COMMENT</span> <span class="string">'用户昵称'</span>,</span><br><span class="line">   <span class="string">`is_awarded`</span> <span class="built_in">tinyint</span>(<span class="number">1</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">DEFAULT</span> <span class="number">0</span> <span class="keyword">COMMENT</span> <span class="string">'用户是否领奖'</span>,</span><br><span class="line">   <span class="string">`award_time`</span> <span class="built_in">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">DEFAULT</span> <span class="number">0</span> <span class="keyword">COMMENT</span> <span class="string">'领奖时间'</span>,</span><br><span class="line">   <span class="string">`account`</span> <span class="built_in">varchar</span>(<span class="number">12</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">DEFAULT</span> <span class="string">''</span> <span class="keyword">COMMENT</span> <span class="string">'帐号'</span>,</span><br><span class="line">   <span class="string">`password`</span> <span class="built_in">char</span>(<span class="number">32</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">DEFAULT</span> <span class="string">''</span> <span class="keyword">COMMENT</span> <span class="string">'密码'</span>,</span><br><span class="line">   <span class="string">`message`</span> <span class="built_in">varchar</span>(<span class="number">255</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">DEFAULT</span> <span class="string">''</span> <span class="keyword">COMMENT</span> <span class="string">'获奖信息'</span>,</span><br><span class="line">   <span class="string">`created_time`</span> <span class="built_in">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">DEFAULT</span> <span class="number">0</span> <span class="keyword">COMMENT</span> <span class="string">'创建时间'</span>,</span><br><span class="line">   <span class="string">`updated_time`</span> <span class="built_in">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">DEFAULT</span> <span class="number">0</span> <span class="keyword">COMMENT</span> <span class="string">'更新时间'</span>,</span><br><span class="line">  PRIMARY <span class="keyword">KEY</span> (<span class="string">`id`</span>) </span><br><span class="line">) <span class="keyword">ENGINE</span>=<span class="keyword">InnoDB</span> AUTO_INCREMENT=<span class="number">1</span> <span class="keyword">DEFAULT</span> <span class="keyword">CHARSET</span>=utf8 <span class="keyword">COMMENT</span>=<span class="string">'获奖信息表'</span>;</span><br></pre></td></tr></table></figure></p>
+<h3 id="一-索引的类型"><a href="#一-索引的类型" class="headerlink" title="(一)索引的类型"></a>(一)索引的类型</h3><blockquote>
+<p>“这里是按照5个罗列，各自说法不一”</p>
+</blockquote>
+<h4 id="1-普通索引"><a href="#1-普通索引" class="headerlink" title="1. 普通索引"></a>1. 普通索引</h4><p>这个是最基本的索引，它没有任何限制，MyIASM中默认的BTREE类型的索引，也是我们大多数情况下用到的索引。</p>
+<p>第一种方式 直接创建索引:<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">INDEX</span> index_name <span class="keyword">ON</span> <span class="keyword">table</span>(<span class="keyword">column</span>(<span class="keyword">length</span>))</span><br></pre></td></tr></table></figure></p>
+<p>第二种方式 修改表结构的方式添加索引:<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> table_name <span class="keyword">ADD</span> <span class="keyword">INDEX</span> index_name <span class="keyword">ON</span> (<span class="keyword">column</span>(<span class="keyword">length</span>))</span><br></pre></td></tr></table></figure></p>
+<p>如果是CHAR、VARCHAR类型，length可以不填，默认字段的实际长度；如果是BLOB、TEXT类型就必须指定长度。</p>
+<h4 id="2-唯一索引"><a href="#2-唯一索引" class="headerlink" title="2. 唯一索引"></a>2. 唯一索引</h4><p>与普通索引类似，不同的就是：索引列的值必须唯一，但允许有空值（注意和主键不同）。如果是组合索引，则列值的组合必须唯一，创建方法和普通索引类似。其sql格式：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">UNIQUE</span> <span class="keyword">INDEX</span> indexName <span class="keyword">ON</span> <span class="keyword">table</span>(<span class="keyword">column</span>(<span class="keyword">length</span>)); </span><br><span class="line">或者 </span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> table_name <span class="keyword">ADD</span> <span class="keyword">UNIQUE</span> indexName <span class="keyword">ON</span> (<span class="keyword">column</span>(<span class="keyword">length</span>));</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">eg:</span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">UNIQUE</span> <span class="keyword">INDEX</span> account_UNIQUE_Index <span class="keyword">ON</span> <span class="string">`award`</span>(<span class="string">`account`</span>);</span><br></pre></td></tr></table></figure></p>
+<h4 id="3-主键索引"><a href="#3-主键索引" class="headerlink" title="3. 主键索引"></a>3. 主键索引</h4><p>不允许有空值，在B+TREE中的InnoDB引擎中，主键索引起到了至关重要的地位。主键索引建立的规则是 int优于varchar，一般在建表的时候创建，最好是与表的其他字段不相关的列或者是业务不相关的列。一般会设为 int 而且是 AUTO_INCREMENT自增类型的。</p>
+<h4 id="4-组合索引（最左前缀）"><a href="#4-组合索引（最左前缀）" class="headerlink" title="4. 组合索引（最左前缀）"></a>4. 组合索引（最左前缀）</h4><p>一个表中含有多个单列索引不代表是组合索引，通俗一点讲 组合索引是：包含多个字段但是只有一个索引名称。</p>
+<p>其sql格式：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">INDEX</span> indexName <span class="keyword">ON</span> tableName(column1(<span class="keyword">length</span>),column2(<span class="keyword">length</span>)); </span><br><span class="line"></span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">INDEX</span> nickname_account_createdTime_Index <span class="keyword">ON</span> <span class="string">`award`</span> (<span class="string">`nickname`</span>, <span class="string">`account`</span>, <span class="string">`created_time`</span>);</span><br></pre></td></tr></table></figure></p>
+<p><strong>如果你建立了 组合索引(nickname_account_createdTime_Index)，那么他实际包含的是3个索引 (nickname) (nickname，account) (nickname，account，created_time)</strong></p>
+<p>在使用查询的时候遵循mysql组合索引的”最左前缀”，下面我们来分析一下 什么是最左前缀:即索引where时的条件要按照建立索引的时候字段的排序方式</p>
+<p>1、不按索引最左列开始查询（多列索引） </p>
+<p>例如：index(‘c1’, ‘c2’, ‘c3’) where ‘c2’ = ‘aaa’ 不使用索引，where <code>c2</code> = <code>aaa</code> and <code>c3</code>=<code>sss</code> 不能使用索引。</p>
+<p>2、查询中某个列有范围查询，则它及其右边的所有列都无法使用查询（多列查询）</p>
+<p>例如：where c1= ‘xxx’ and c2 like ‘%aa%’ and c3= ‘sss’ 该查询只会使用索引中的前1列，因为like是范围查询（因为like ‘aa%’ 会走索引，所以不会影响组合索引，反之like ‘%aa%’不会走索引，会影响组合索引）。</p>
+<p>3、不能跳过某个字段来进行查询，这样利用不到索引</p>
+<p>例如：sql 是 explain select * from <code>award</code> where account = ‘DYxJoqZq2rd7’ and created_time = 1449567822; 那么这时候他使用不到其组合索引。因为我的索引是 (nickname, account, created_time)，如果索引第一个字段未出现，那么将不会用到索引，如果我是第二个字段未出现，那么他会利用索引，利用的索引是(nickname)，因为上面说了建立组合索引(nickname, account, created_time)，会出现三个索引</p>
+<h4 id="5-全文索引（FULLTEXT）"><a href="#5-全文索引（FULLTEXT）" class="headerlink" title="5. 全文索引（FULLTEXT）"></a>5. 全文索引（FULLTEXT）</h4><p>MySQL从3.23.23版开始支持全文索引和全文检索，FULLTEXT索引仅可用于 MyISAM 表。他们可以从CHAR、VARCHAR 或 TEXT 列中作为 CREATE TABLE 语句的一部分被创建，或是随后使用 ALTER TABLE 或 CREATE INDEX 被添加。如果建立的是普通索引，那么只有对文本的字段内容前面的字符进行索引，其字符大小根据索引建立索引时申明的大小来规定。</p>
+<p>注意：对于较大的数据集，将你的资料输入一个没有FULLTEXT索引的表中，然后创建索引，其速度比把资料输入现有FULLTEXT索引的速度更为快。不过切记对于大容量的数据表，生成全文索引是一个非常消耗时间非常消耗硬盘空间的做法。</p>
+<p>如果文本中出现多个一样的字符，而且需要查找的话，那么其条件只能是 where column lick ‘%xxxx%’ 这样做会让索引失效，这个时候全文索引就起到作用了，其sql为：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> tableName <span class="keyword">ADD</span> FULLTEXT(column1, column2)</span><br></pre></td></tr></table></figure>
+<p>有了全文索引，就可以用SELECT查询命令去检索那些包含着一个或多个给定单词的数据记录了：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> tablename <span class="keyword">WHERE</span> <span class="keyword">MATCH</span>(column1, column2) AGAINST(<span class="string">'xxx'</span>,<span class="string">'sss'</span>,<span class="string">'ddd'</span>);</span><br></pre></td></tr></table></figure></p>
+<p>这条命令将把column1和column2字段里有xxx、sss和ddd的数据记录全部查询出来。</p>
+<h3 id="二-索引的删除"><a href="#二-索引的删除" class="headerlink" title="(二)索引的删除"></a>(二)索引的删除</h3><p>删除索引的mysql语句格式：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">DORP INDEX IndexName ON `TableName`</span><br></pre></td></tr></table></figure></p>
+<h3 id="三-使用索引的优点"><a href="#三-使用索引的优点" class="headerlink" title="(三)使用索引的优点"></a>(三)使用索引的优点</h3><ul>
+<li>可以通过建立唯一索引或者主键索引，保证数据库表中每一行数据的唯一性.</li>
+<li>建立索引可以大大提高检索的数据，以及减少表的检索行数</li>
+<li>在表连接的连接条件 可以加速表与表直接的相连 </li>
+<li>在分组和排序字句进行数据检索，可以减少查询时间中 分组 和 排序时所消耗的时间(数据库的记录会重新排序)</li>
+<li>建立索引，在查询中使用索引 可以提高性能</li>
+</ul>
+<h3 id="四-使用索引的缺点"><a href="#四-使用索引的缺点" class="headerlink" title="(四)使用索引的缺点"></a>(四)使用索引的缺点</h3><ul>
+<li>在创建索引和维护索引会耗费时间，随着数据量的增加而增加</li>
+<li>索引文件会占用物理空间，除了数据表需要占用物理空间之外，每一个索引还会占用一定的物理空间</li>
+<li>当对表的数据进行 INSERT，UPDATE，DELETE 的时候，索引也要动态的维护，这样就会降低数据的维护速度，(建立索引会占用磁盘空间的索引文件。一般情况这个问题不太严重，但如果你在一个大表上创建了多种组合索引，索引文件的会膨胀很快)。</li>
+</ul>
+<h3 id="五-使用索引需要注意的地方"><a href="#五-使用索引需要注意的地方" class="headerlink" title="(五)使用索引需要注意的地方"></a>(五)使用索引需要注意的地方</h3><p>在建立索引的时候应该考虑索引应该建立在数据库表中的哪些列上面，哪一些索引需要建立，哪一些所以是多余的。一般来说：</p>
+<ul>
+<li>在经常需要搜索的列上，可以加快索引的速度。</li>
+<li>主键列上可以确保列的唯一性。</li>
+<li>在表与表的而连接条件上加上索引，可以加快连接查询的速度。</li>
+<li>在经常需要排序(order by)，分组(group by)和的distinct 列上加索引可以加快排序查询的时间，(单独order by 用不了索引，索引考虑加where 或加limit)。</li>
+<li>在一些where之后的 &lt; &lt;= &gt; &gt;= BETWEEN IN 以及某个情况下的like 建立字段的索引(B-TREE)。</li>
+<li>like语句，如果你对nickname字段建立了一个索引，当查询的时候的语句是 nickname lick ‘%ABC%’ 那么这个索引讲不会起到作用。而nickname lick ‘ABC%’ 那么将可以用到索引。</li>
+<li>索引不会包含NULL列，如果列中包含NULL值都将不会被包含在索引中，复合索引中如果有一列含有NULL值那么这个组合索引都将失效，一般需要给默认值0或者 ‘ ‘字符串。</li>
+<li>使用短索引，如果你的一个字段是Char(32)或者int(32)，在创建索引的时候指定前缀长度 比如前10个字符 (前提是多数值是唯一的..)那么短索引可以提高查询速度，并且可以减少磁盘的空间，也可以减少I/0操作。</li>
+<li>不要在列上进行运算，这样会使得mysql索引失效，也会进行全表扫描。</li>
+<li>选择越小的数据类型越好，因为通常越小的数据类型通常在磁盘，内存，cpu，缓存中 占用的空间很少，处理起来更快。</li>
+</ul>
+<h3 id="六-什么情况下不创建索引"><a href="#六-什么情况下不创建索引" class="headerlink" title="(六)什么情况下不创建索引"></a>(六)什么情况下不创建索引</h3><ul>
+<li>查询中很少使用到的列不应该创建索引，如果建立了索引然而还会降低mysql的性能和增大了空间需求。</li>
+<li>很少数据的列也不应该建立索引，比如一个性别字段0或者1，在查询中，结果集的数据占了表中数据行的比例比较大，mysql需要扫描的行数很多，增加索引，并不能提高效率。</li>
+<li>定义为text和image和bit数据类型的列不应该增加索引。</li>
+<li>当表的修改(UPDATE，INSERT，DELETE)操作远远大于检索(SELECT)操作时不应该创建索引，这两个操作是互斥的关系.</li>
+</ul>
+</section>
+    <!-- Tags START -->
+    
+      <div class="tags">
+        <span>Tags:</span>
+        
+  <a href="../../../../tags#mysql" >
+    <span class="tag-code">mysql</span>
+  </a>
+
+      </div>
+    
+    <!-- Tags END -->
+    <!-- NAV START -->
+    
+  <div class="nav-container">
+    <!-- reverse left and right to put prev and next in a more logic postition -->
+    
+      <a class="nav-left" href="../../05/同一台机器如何同时使用多个Git账号/">
+        <span class="nav-arrow">← </span>
+        
+          同一台机器如何同时使用多个Git账号
+        
+      </a>
+    
+    
+      <a class="nav-right" href="../../../03/30/nginx-tomcat配置负载均衡集群/">
+        
+          nginx+tomcat配置负载均衡集群
+        
+        <span class="nav-arrow"> →</span>
+      </a>
+    
+  </div>
+
+    <!-- NAV END -->
+    <!-- 打赏 START -->
+    
+    <!-- 打赏 END -->
+    <!-- 二维码 START -->
+    
+      <div class="qrcode">
+        <canvas id="share-qrcode"></canvas>
+        <p class="notice">扫描二维码，分享此文章</p>
+      </div>
+    
+    <!-- 二维码 END -->
+    
+      <!-- Gitment START -->
+      <div id="comments"></div>
+      <!-- Gitment END -->
+    
+  </article>
+  <!-- Article END -->
+  <!-- Catalog START -->
+  
+    <aside class="catalog-container">
+  <div class="toc-main">
+    <strong class="toc-title">目录</strong>
+    
+      <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#索引的概念"><span class="toc-nav-text">索引的概念</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#什么是聚集索引？？"><span class="toc-nav-text">什么是聚集索引？？</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#什么是非聚集索引？？"><span class="toc-nav-text">什么是非聚集索引？？</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#存储特点："><span class="toc-nav-text">存储特点：</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#更新表数据："><span class="toc-nav-text">更新表数据：</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#向表中插入新数据行"><span class="toc-nav-text">向表中插入新数据行</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#从表中删除数据行"><span class="toc-nav-text">从表中删除数据行</span></a></li></ol></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#下面结合例子说明"><span class="toc-nav-text">下面结合例子说明</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#一-索引的类型"><span class="toc-nav-text">(一)索引的类型</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#1-普通索引"><span class="toc-nav-text">1. 普通索引</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#2-唯一索引"><span class="toc-nav-text">2. 唯一索引</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#3-主键索引"><span class="toc-nav-text">3. 主键索引</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#4-组合索引（最左前缀）"><span class="toc-nav-text">4. 组合索引（最左前缀）</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#5-全文索引（FULLTEXT）"><span class="toc-nav-text">5. 全文索引（FULLTEXT）</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#二-索引的删除"><span class="toc-nav-text">(二)索引的删除</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#三-使用索引的优点"><span class="toc-nav-text">(三)使用索引的优点</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#四-使用索引的缺点"><span class="toc-nav-text">(四)使用索引的缺点</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#五-使用索引需要注意的地方"><span class="toc-nav-text">(五)使用索引需要注意的地方</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#六-什么情况下不创建索引"><span class="toc-nav-text">(六)什么情况下不创建索引</span></a></li></ol></li></ol>
+    
+  </div>
+</aside>
+  
+  <!-- Catalog END -->
+</main>
+
+<script>
+  (function () {
+    var url = 'http://bgq365.github.io/2017/01/06/细说MySQL索引/';
+    var banner = ''
+    if (banner !== '' && banner !== 'undefined' && banner !== 'null') {
+      $('#article-banner').css({
+        'background-image': 'url(' + banner + ')'
+      })
+    } else {
+      $('#article-banner').geopattern(url)
+    }
+    $('.header').removeClass('fixed-header')
+
+     // error image
+    $(".markdown-content img").on('error', function() {
+      $(this).attr('src', 'http://file.muyutech.com/error-img.png')
+      $(this).css({
+        'cursor': 'default'
+      })
+    })
+
+    // zoom image
+    $(".markdown-content img").on('click', function() {
+      var src = $(this).attr('src')
+      if (src !== 'http://file.muyutech.com/error-img.png') {
+        var imageW = $(this).width()
+        var imageH = $(this).height()
+        
+        var zoom = ($(window).width() * 0.95 / imageW).toFixed(2)
+        zoom = zoom < 1 ? 1 : zoom
+        zoom = zoom > 2 ? 2 : zoom
+        var transY = (($(window).height() - imageH) / 2).toFixed(2)
+
+        $('body').append('<div class="image-view-wrap"><div class="image-view-inner"><img src="'+ src +'" /></div></div>')
+        $('.image-view-wrap').addClass('wrap-active')
+        $('.image-view-wrap img').css({
+          'width': `${imageW}`,
+          'transform': `translate3d(0, ${transY}px, 0) scale3d(${zoom}, ${zoom}, 1)`
+        })
+        $('html').css('overflow', 'hidden')
+
+        $('.image-view-wrap').on('click', function() {
+          $(this).remove()
+          $('html').attr('style', '')
+        })
+      }
+    })
+
+    // qrcode
+    var qr = new QRious({
+      element: document.getElementById('share-qrcode'),
+      value: document.location.href
+    });
+
+    // gitment
+    var gitmentConfig = "bgq365";
+    if (gitmentConfig !== 'undefined') {
+      var gitment = new Gitment({
+        id: "细说MySQL索引",
+        owner: "bgq365",
+        repo: "bgq365.github.io",
+        oauth: {
+          client_id: "f3e90d28b061179a623d",
+          client_secret: "18a443624ad8d5a4ec225e054e1b5acedd0ed630"
+        },
+        theme: {
+          render(state, instance) {
+            const container = document.createElement('div')
+            container.lang = "en-US"
+            container.className = 'gitment-container gitment-root-container'
+            container.appendChild(instance.renderHeader(state, instance))
+            container.appendChild(instance.renderEditor(state, instance))
+            container.appendChild(instance.renderComments(state, instance))
+            container.appendChild(instance.renderFooter(state, instance))
+            return container;
+          }
+        }
+      })
+      gitment.render(document.getElementById('comments'))
+    }
+  })();
+</script>
+
+    <div class="scroll-top">
+  <span class="arrow-icon"></span>
+</div>
+    <footer class="app-footer">
+  <p class="copyright">
+    &copy; 2017 - 2021 | Proudly powered by <a href="https://hexo.io" target="_blank">Hexo</a>
+  </p>
+</footer>
+
+<script>
+  function async(u, c) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+</script>
+<script>
+  async("//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+    FastClick.attach(document.body);
+  })
+</script>
+
+<script>
+  var hasLine = 'true';
+  async("//cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js", function(){
+    $('figure pre').each(function(i, block) {
+      var figure = $(this).parents('figure');
+      if (hasLine === 'false') {
+        figure.find('.gutter').hide();
+      }
+      var lang = figure.attr('class').split(' ')[1] || 'code';
+      var codeHtml = $(this).html();
+      var codeTag = document.createElement('code');
+      codeTag.className = lang;
+      codeTag.innerHTML = codeHtml;
+      $(this).attr('class', '').empty().html(codeTag);
+      figure.attr('data-lang', lang.toUpperCase());
+      hljs.highlightBlock(block);
+    });
+  })
+</script>
+<!-- Baidu Tongji -->
+
+<script src="../../../../js/script.js"></script>
+  </body>
+</html>
