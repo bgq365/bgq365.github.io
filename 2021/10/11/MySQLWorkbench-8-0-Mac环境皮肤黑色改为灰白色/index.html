@@ -10,7 +10,7 @@
   
   <title>
     
-      Pentaho data integration(kettle) 在Mac上启动失败 | 三两土豆
+      MySQLWorkbench 8.0 Mac环境皮肤黑色改为灰白色 | 三两土豆
     
   </title>
   <link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
@@ -141,8 +141,8 @@
 </header>
 
     <div id="article-banner">
-  <h2>Pentaho data integration(kettle) 在Mac上启动失败</h2>
-  <p class="post-date">2019-07-01</p>
+  <h2>MySQLWorkbench 8.0 Mac环境皮肤黑色改为灰白色</h2>
+  <p class="post-date">2021-10-11</p>
   <div class="arrow-down">
     <a href="javascript:;"></a>
   </div>
@@ -150,22 +150,20 @@
 <main class="app-body flex-box">
   <!-- Article START -->
   <article class="post-article">
-    <section class="markdown-content"><h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><ul>
-<li>MacOS Mojave (10.14.1)</li>
-<li>Pentaho Data Integration 8.2</li>
-<li>Java 8</li>
-</ul>
-<h1 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h1><p>使用的解压包，解压之后，放到了Application中，然后打开<code>Data Integration</code>。</p>
-<p>第一次打开，提示安全问题，需要授权，可在<code>系统偏好设置&gt;安全性与隐私</code>中设置。</p>
-<p>第二次打开，没有任何反应。</p>
-<h1 id="解决方式"><a href="#解决方式" class="headerlink" title="解决方式"></a>解决方式</h1><h2 id="从Terminal启动"><a href="#从Terminal启动" class="headerlink" title="从Terminal启动"></a>从Terminal启动</h2><p>从<code>terminal</code>进入到解压之后的目录<code>data-integration</code>中，找到脚本<code>spoon.sh</code>，然后执行它：<code>./spoon.sh</code>，启动成功。</p>
-<h2 id="从Launchpad启动"><a href="#从Launchpad启动" class="headerlink" title="从Launchpad启动"></a>从Launchpad启动</h2><p>想要从Launchpad双击图标启动，就得解决权限的问题。</p>
-<p>随着Mac系统版本升级，Mac的权限控制越来越严。在网上找到这篇帖子，虽然系统版本和我的略有差别，但是原理是一样的。</p>
-<p>在解压之后，把整个<code>data-integration</code>移动到<code>/Applications</code>目录下，然后执行：</p>
-<p><code>sudo xattr -dr com.apple.quarantine /Applications/data-integration/Data\ Integration.app</code></p>
-<p>执行成功之后，再双击图标就可以打开程序了。</p>
+    <section class="markdown-content"><p>由于Mac默认背景色是黑色，加上MySQLWorkbench跟随系统，所以8.0版本皮肤是黑色背景。</p>
+<p>如果要调整为Windows一样的灰白色，打开MySQLWorkbench的SQL执行窗口，执行如下命令即可：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">defaults write com.oracle.workbench.MySQLWorkbench NSRequiresAquaSystemAppearance -bool yes</span><br></pre></td></tr></table></figure></p>
+<p>~完美~</p>
 </section>
     <!-- Tags START -->
+    
+      <div class="tags">
+        <span>Tags:</span>
+        
+  <a href="../../../../tags#MySQLWorkbench" >
+    <span class="tag-code">MySQLWorkbench</span>
+  </a>
+
+      </div>
     
     <!-- Tags END -->
     <!-- NAV START -->
@@ -173,20 +171,13 @@
   <div class="nav-container">
     <!-- reverse left and right to put prev and next in a more logic postition -->
     
-      <a class="nav-left" href="../../../06/13/Mac下卸载-安装-brew/">
+      <a class="nav-left" href="../../../../2019/07/01/Pentaho-data-integration-kettle-在Mac上启动失败/">
         <span class="nav-arrow">← </span>
         
-          Mac下卸载/安装 brew
+          Pentaho data integration(kettle) 在Mac上启动失败
         
       </a>
     
-    
-      <a class="nav-right" href="../../../../2021/10/11/MySQLWorkbench-8-0-Mac环境皮肤黑色改为灰白色/">
-        
-          MySQLWorkbench 8.0 Mac环境皮肤黑色改为灰白色
-        
-        <span class="nav-arrow"> →</span>
-      </a>
     
   </div>
 
@@ -215,7 +206,7 @@
   <div class="toc-main">
     <strong class="toc-title">目录</strong>
     
-      <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#环境"><span class="toc-nav-text">环境</span></a></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#问题描述"><span class="toc-nav-text">问题描述</span></a></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#解决方式"><span class="toc-nav-text">解决方式</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#从Terminal启动"><span class="toc-nav-text">从Terminal启动</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#从Launchpad启动"><span class="toc-nav-text">从Launchpad启动</span></a></li></ol></li></ol>
+      <ol class="nav">none</ol>
     
   </div>
 </aside>
@@ -225,7 +216,7 @@
 
 <script>
   (function () {
-    var url = 'http://bgq365.github.io/2019/07/01/Pentaho-data-integration-kettle-在Mac上启动失败/';
+    var url = 'http://bgq365.github.io/2021/10/11/MySQLWorkbench-8-0-Mac环境皮肤黑色改为灰白色/';
     var banner = ''
     if (banner !== '' && banner !== 'undefined' && banner !== 'null') {
       $('#article-banner').css({
@@ -281,7 +272,7 @@
     var gitmentConfig = "bgq365";
     if (gitmentConfig !== 'undefined') {
       var gitment = new Gitment({
-        id: "Pentaho data integration(kettle) 在Mac上启动失败",
+        id: "MySQLWorkbench 8.0 Mac环境皮肤黑色改为灰白色",
         owner: "bgq365",
         repo: "bgq365.github.io",
         oauth: {
