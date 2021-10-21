@@ -10,7 +10,7 @@
   
   <title>
     
-      Mac环境 MySQLWorkbench8.0 黑色皮肤改为灰白色 | 三两土豆
+      Mac系统根目录无法创建文件夹，出现[Read-only file system]问题 | 三两土豆
     
   </title>
   <link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
@@ -141,8 +141,8 @@
 </header>
 
     <div id="article-banner">
-  <h2>Mac环境 MySQLWorkbench8.0 黑色皮肤改为灰白色</h2>
-  <p class="post-date">2020-10-11</p>
+  <h2>Mac系统根目录无法创建文件夹，出现[Read-only file system]问题</h2>
+  <p class="post-date">2021-10-21</p>
   <div class="arrow-down">
     <a href="javascript:;"></a>
   </div>
@@ -150,20 +150,19 @@
 <main class="app-body flex-box">
   <!-- Article START -->
   <article class="post-article">
-    <section class="markdown-content"><p>由于Mac默认背景色是黑色，加上MySQLWorkbench跟随系统，所以8.0版本皮肤是黑色背景。</p>
-<p>如果要调整为Windows一样的灰白色，打开MySQLWorkbench的SQL执行窗口，执行如下命令即可：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">defaults write com.oracle.workbench.MySQLWorkbench NSRequiresAquaSystemAppearance -bool yes</span><br></pre></td></tr></table></figure></p>
-<p>~完美~</p>
+    <section class="markdown-content"><h1 id="问题背景"><a href="#问题背景" class="headerlink" title="问题背景"></a>问题背景</h1><p>由于项目的日志文件路径配置成了<code>/home/ops/logs/xxx</code>，Mac系统需要在根路径创建home文件夹，执行命令：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">用户名@bgq ~ % mkdir /home</span><br><span class="line">mkdir: /home: Read-only file system</span><br></pre></td></tr></table></figure>
+<p>返回这个错误，网上查询，说是SIP是开启的状态的原因，需要重启电脑进入Recovery模式将它关闭，关闭方法网上有很多，这里不做阐述。<br>可以通过以下命令查看SIP状态：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">用户名@bgq ~ % csrutil status                    </span><br><span class="line">System Integrity Protection status: disabled.</span><br></pre></td></tr></table></figure></p>
+<p><strong>本文采用建立文件夹软连接的方式解决不能创建文件的问题。</strong></p>
+<h1 id="解决办法"><a href="#解决办法" class="headerlink" title="解决办法"></a>解决办法</h1><p>第一步：创建home源文件夹</p>
+<p>在有权限的路径下（我是在~路径下创建的），路径如：/Users/用户名/home</p>
+<p>第二步：创建软连接</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">用户名@bgq ~ % sudo vim /etc/synthetic.conf</span><br><span class="line"></span><br><span class="line">在文件中新增：</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span>注意home后面是tab，不是空格（可以用左右方向键测试一下）</span><br><span class="line">home    /Users/用户名/home </span><br><span class="line"></span><br><span class="line">保存</span><br></pre></td></tr></table></figure>
+<p>第三步：重启系统</p>
+<p>~完成~</p>
+<p>接下来就可以直接 <code>cd /home</code>路径啦</p>
 </section>
     <!-- Tags START -->
-    
-      <div class="tags">
-        <span>Tags:</span>
-        
-  <a href="../../../../tags#MySQLWorkbench" >
-    <span class="tag-code">MySQLWorkbench</span>
-  </a>
-
-      </div>
     
     <!-- Tags END -->
     <!-- NAV START -->
@@ -171,20 +170,13 @@
   <div class="nav-container">
     <!-- reverse left and right to put prev and next in a more logic postition -->
     
-      <a class="nav-left" href="../../../../2019/07/01/Pentaho-data-integration-kettle-在Mac上启动失败/">
+      <a class="nav-left" href="../../../../2020/10/11/Mac环境-MySQLWorkbench8-0-黑色皮肤改为灰白色/">
         <span class="nav-arrow">← </span>
         
-          Pentaho data integration(kettle) 在Mac上启动失败
+          Mac环境 MySQLWorkbench8.0 黑色皮肤改为灰白色
         
       </a>
     
-    
-      <a class="nav-right" href="../../../../2021/10/21/Mac系统根目录无法创建文件夹/">
-        
-          Mac系统根目录无法创建文件夹，出现[Read-only file system]问题
-        
-        <span class="nav-arrow"> →</span>
-      </a>
     
   </div>
 
@@ -213,7 +205,7 @@
   <div class="toc-main">
     <strong class="toc-title">目录</strong>
     
-      <ol class="nav">none</ol>
+      <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#问题背景"><span class="toc-nav-text">问题背景</span></a></li><li class="toc-nav-item toc-nav-level-1"><a class="toc-nav-link" href="#解决办法"><span class="toc-nav-text">解决办法</span></a></li></ol>
     
   </div>
 </aside>
@@ -223,7 +215,7 @@
 
 <script>
   (function () {
-    var url = 'http://bgq365.github.io/2020/10/11/Mac环境-MySQLWorkbench8-0-黑色皮肤改为灰白色/';
+    var url = 'http://bgq365.github.io/2021/10/21/Mac系统根目录无法创建文件夹/';
     var banner = ''
     if (banner !== '' && banner !== 'undefined' && banner !== 'null') {
       $('#article-banner').css({
@@ -279,7 +271,7 @@
     var gitmentConfig = "bgq365";
     if (gitmentConfig !== 'undefined') {
       var gitment = new Gitment({
-        id: "Mac环境 MySQLWorkbench8.0 黑色皮肤改为灰白色",
+        id: "Mac系统根目录无法创建文件夹，出现[Read-only file system]问题",
         owner: "bgq365",
         repo: "bgq365.github.io",
         oauth: {
